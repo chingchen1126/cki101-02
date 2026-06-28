@@ -2,6 +2,8 @@ import os
 import time
 import pymysql
 from flask import Flask, request, jsonify
+from google.cloud import storage
+from google.auth.exceptions import DefaultCredentialsError
 
 app = Flask(__name__)
 
@@ -107,6 +109,47 @@ def delete_user(user_id):
         return jsonify({"error": f"找不到 id={user_id} 的用戶"}), 404
 
     return jsonify({"message": f"用戶 id={user_id} 已刪除"}), 200
+
+
+# ──────────────────────────────────────────────
+@app.route('/gcp', methods=['GET'])
+def list_gcs_buckets():
+    """
+    列出指定 GCP project 的 Cloud Storage buckets
+    使用方式: GET /gcp?project_id=your-project-id
+    憑證：自動使用 Application Default Credentials (ADC)
+      - 本地開發：執行 `gcloud auth application-default login` 後自動取得
+      - GCP 環境（GCE/Cloud Run/GKE）：自動使用 Service Account
+    """
+    project_id = request.args.get('project_id', '').strip()
+
+    if not project_id:
+        return jsonify({"error": "請提供 project_id 參數，例如: /gcp?project_id=my-project"}), 400
+
+    try:
+        # 使用 ADC 自動取得憑證，不需要手動指定金鑰檔
+        client = storage.Client(project=project_id)
+        buckets = client.list_buckets()
+        bucket_list = [
+            {
+                "name": bucket.name,
+                "location": bucket.location,
+                "storage_class": bucket.storage_class,
+            }
+            for bucket in buckets
+        ]
+        return jsonify({
+            "project_id": project_id,
+            "bucket_count": len(bucket_list),
+            "buckets": bucket_list,
+        }), 200
+
+    except DefaultCredentialsError:
+        return jsonify({
+            "error": "找不到 GCP 憑證，請執行 `gcloud auth application-default login` 或確認 Service Account 設定"
+        }), 401
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 # ──────────────────────────────────────────────
