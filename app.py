@@ -1,4 +1,5 @@
 import os
+import time
 import pymysql
 from flask import Flask, request, jsonify
 
@@ -25,18 +26,27 @@ def get_db():
 
 
 def init_db():
-    """初始化：建立 users 資料表（若不存在）"""
-    conn = get_db()
-    with conn:
-        with conn.cursor() as cursor:
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS users (
-                    id   INT AUTO_INCREMENT PRIMARY KEY,
-                    name VARCHAR(100) NOT NULL,
-                    age  INT NOT NULL
-                )
-            """)
-        conn.commit()
+    """初始化：等待 MySQL ready 後建立 users 資料表"""
+    retries = 10
+    for i in range(retries):
+        try:
+            conn = get_db()
+            with conn:
+                with conn.cursor() as cursor:
+                    cursor.execute("""
+                        CREATE TABLE IF NOT EXISTS users (
+                            id   INT AUTO_INCREMENT PRIMARY KEY,
+                            name VARCHAR(100) NOT NULL,
+                            age  INT NOT NULL
+                        )
+                    """)
+                conn.commit()
+            print("[init_db] 資料庫連線成功，資料表已就緒")
+            return
+        except pymysql.err.OperationalError as e:
+            print(f"[init_db] MySQL 尚未就緒，{3} 秒後重試... ({i+1}/{retries})")
+            time.sleep(3)
+    raise RuntimeError("[init_db] 無法連線到 MySQL，請確認服務是否正常")
 
 
 # ──────────────────────────────────────────────

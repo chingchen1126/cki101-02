@@ -16,7 +16,8 @@ services:
       MYSQL_PASSWORD: Roger1126
       MYSQL_DATABASE: cki101
     depends_on:
-      - mysql            # 等 MySQL 啟動後再起 Flask
+      mysql:
+        condition: service_healthy  # 等 MySQL healthcheck 通過才啟動 Flask
     restart: always
 
   mysql:
@@ -29,4 +30,11 @@ services:
       MYSQL_DATABASE: cki101
     volumes:
       - ./db_data:/var/lib/mysql  # 資料持久化到專案資料夾的 db_data
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pRoger1126"]
+      interval: 5s    # 每 5 秒檢查一次
+      timeout: 5s     # 逾時 5 秒
+      retries: 10     # 最多重試 10 次
+      start_period: 10s  # 啟動後等 10 秒再開始檢查
     restart: always
+
