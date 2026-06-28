@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  web:
+    build:
+      context: .          # 使用當前目錄的 Dockerfile
+      dockerfile: Dockerfile
+    image: flask-feature-one
+    container_name: flask-container
+    ports:
+      - "80:5000"         # 主機 80 port → 容器 5000 port
+    restart: always
