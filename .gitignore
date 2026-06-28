@@ -1,0 +1,12 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# MySQL data (不上傳 DB 資料)
+db_data/
+
+# OS
+.DS_Store
+Thumbs.db

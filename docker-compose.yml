@@ -9,4 +9,24 @@ services:
     container_name: flask-container
     ports:
       - "80:5000"         # 主機 80 port → 容器 5000 port
+    environment:
+      MYSQL_HOST:     mysql.clki101   # Container 內連到 MySQL container
+      MYSQL_PORT:     3306
+      MYSQL_USER:     root
+      MYSQL_PASSWORD: Roger1126
+      MYSQL_DATABASE: cki101
+    depends_on:
+      - mysql            # 等 MySQL 啟動後再起 Flask
+    restart: always
+
+  mysql:
+    image: mysql:8.4
+    container_name: mysql.clki101
+    ports:
+      - "8625:3306"       # 主機 8625 port → 容器 3306 port
+    environment:
+      MYSQL_ROOT_PASSWORD: Roger1126
+      MYSQL_DATABASE: cki101
+    volumes:
+      - ./db_data:/var/lib/mysql  # 資料持久化到專案資料夾的 db_data
     restart: always

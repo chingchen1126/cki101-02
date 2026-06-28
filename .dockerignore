@@ -3,3 +3,8 @@ __pycache__
 *.pyc
 .git
 .gitignore
+db_data/
+.venv/
+__pycache__/
+*.pyc
+.git/
